@@ -1,0 +1,70 @@
+.room {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.name-entry {
+  text-align: center;
+  margin-top: 50px;
+}
+
+.name-entry input {
+  padding: 8px;
+  margin-right: 10px;
+}
+
+.voting-cards {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.voting-card {
+  width: 60px;
+  height: 90px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.voting-card:hover {
+  transform: translateY(-5px);
+}
+
+.voting-card.selected {
+  border-color: #007bff;
+  background-color: #e7f1ff;
+}
+
+.participants ul {
+  list-style: none;
+  padding: 0;
+}
+
+.participants li {
+  margin: 5px 0;
+}
+
+.room-info {
+  margin: 20px 0;
+  text-align: right;
+}
+
+.share-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.share-button:hover {
+  background-color: #218838;
+} 
