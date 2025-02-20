@@ -67,4 +67,199 @@
 
 .share-button:hover {
   background-color: #218838;
+}
+
+.landing-page {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.create-room-form {
+  margin-top: 30px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.create-room-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.create-room-button:hover {
+  background-color: #218838;
+}
+
+.scrum-master-badge {
+  background-color: #17a2b8;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-left: 10px;
+  font-size: 14px;
+}
+
+.reveal-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.reveal-button:hover {
+  background-color: #0056b3;
+}
+
+.role-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-left: 10px;
+  font-size: 14px;
+  display: inline-block;
+}
+
+.role-badge.scrum-master {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.role-badge.team-member {
+  background-color: #6c757d;
+  color: white;
+}
+
+.participant-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vote-status {
+  margin-left: 10px;
+  color: #666;
+}
+
+.participants li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.vote-summary {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.vote-summary h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.room-header {
+  margin-bottom: 20px;
+}
+
+.task-name {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.task-name h3 {
+  margin: 0;
+  color: #495057;
+  font-size: 1.2em;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #495057;
+  font-weight: 500;
+}
+
+.participant-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.participant-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.role-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.role-badge.scrum-master {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.role-badge.team-member {
+  background-color: #6c757d;
+  color: white;
+}
+
+.vote-status {
+  font-weight: 500;
+  color: #495057;
+}
+
+.vote-summary {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.vote-stats {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.vote-stats p {
+  margin: 0;
+  color: #495057;
 } 
