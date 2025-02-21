@@ -17,6 +17,7 @@ const Room = () => {
   const [allVotesRevealed, setAllVotesRevealed] = useState(false);
   const [broadcastChannel, setBroadcastChannel] = useState(null);
   const [scrumMasterName, setScrumMasterName] = useState(null);
+  const [hasExistingScrumMaster, setHasExistingScrumMaster] = useState(false);
 
   const pointOptions = [1, 2, 3, 5, 8];
   const isScrumMaster = userName === scrumMasterName;
@@ -50,7 +51,8 @@ const Room = () => {
                 type: 'SYNC_STATE',
                 data: {
                   participants: participants,
-                  allVotesRevealed: allVotesRevealed
+                  allVotesRevealed: allVotesRevealed,
+                  scrumMasterName: scrumMasterName
                 }
               });
             }
@@ -59,24 +61,58 @@ const Room = () => {
           case 'SYNC_STATE':
             // Update our state with the received state
             if (data.participants.length > 0) {
-              setParticipants(data.participants);
+              // Create a merged list combining received participants and our current list
+              const allParticipants = new Set([
+                ...data.participants.map(p => JSON.stringify(p)),
+                ...participants.map(p => JSON.stringify(p))
+              ]);
+              
+              const updatedParticipants = Array.from(allParticipants).map(p => JSON.parse(p));
+              
+              setParticipants(updatedParticipants);
               setAllVotesRevealed(data.allVotesRevealed);
+              if (data.scrumMasterName) {
+                setScrumMasterName(data.scrumMasterName);
+                setHasExistingScrumMaster(true);
+              }
             }
             break;
 
           case 'JOIN_ROOM':
             setParticipants(prev => {
+              // Don't add duplicates
               if (!prev.find(p => p.name === data.userName)) {
-                return [...prev, { 
+                const newParticipant = { 
                   name: data.userName, 
                   vote: null, 
                   isScrumMaster: data.isScrumMaster 
-                }];
+                };
+                
+                const updatedParticipants = [...prev, newParticipant];
+                
+                // If we're already in the room, send our complete state back
+                if (isNameSubmitted) {
+                  // Small delay to ensure the joining client is ready to receive
+                  setTimeout(() => {
+                    channel.postMessage({
+                      type: 'SYNC_STATE',
+                      data: {
+                        participants: updatedParticipants,
+                        allVotesRevealed: allVotesRevealed,
+                        scrumMasterName: scrumMasterName
+                      }
+                    });
+                  }, 100);
+                }
+                
+                return updatedParticipants;
               }
               return prev;
             });
-            if (data.scrumMasterName) {
-              setScrumMasterName(data.scrumMasterName);
+            
+            if (data.isScrumMaster) {
+              setScrumMasterName(data.userName);
+              setHasExistingScrumMaster(true);
             }
             break;
 
@@ -117,33 +153,38 @@ const Room = () => {
   const handleNameSubmit = (e) => {
     e.preventDefault();
     if (userName.trim() && broadcastChannel) {
+      const trimmedName = userName.trim();
+      
       // Check if the name is already taken
-      if (participants.some(p => p.name === userName.trim())) {
+      if (participants.some(p => p.name === trimmedName)) {
         alert('This name is already taken. Please choose another name.');
         return;
       }
 
       setIsNameSubmitted(true);
       
-      // If this is the creator, they become Scrum Master
-      if (isCreator) {
-        setScrumMasterName(userName.trim());
+      // Only set as Scrum Master if creator AND no existing Scrum Master
+      const shouldBeScrumMaster = isCreator && !hasExistingScrumMaster;
+      
+      if (shouldBeScrumMaster) {
+        setScrumMasterName(trimmedName);
       }
 
-      // Add ourselves to participants
-      setParticipants([{ 
-        name: userName.trim(), 
+      const newParticipant = { 
+        name: trimmedName, 
         vote: null,
-        isScrumMaster: isCreator
-      }]);
+        isScrumMaster: shouldBeScrumMaster
+      };
+
+      // Add ourselves to participants
+      setParticipants(prev => [...prev, newParticipant]);
 
       // Broadcast our join
       broadcastChannel.postMessage({
         type: 'JOIN_ROOM',
         data: { 
-          userName: userName.trim(),
-          isScrumMaster: isCreator,
-          scrumMasterName: isCreator ? userName.trim() : null
+          userName: trimmedName,
+          isScrumMaster: shouldBeScrumMaster
         }
       });
 
@@ -197,16 +238,18 @@ const Room = () => {
   if (!isNameSubmitted) {
     return (
       <div className="name-entry">
-        <h2>{isCreator ? 'Enter Scrum Master Name' : 'Join the Planning Poker Room'}</h2>
+        <h2>{!hasExistingScrumMaster && isCreator ? 'Enter Scrum Master Name' : 'Join the Planning Poker Room'}</h2>
         <form onSubmit={handleNameSubmit}>
           <input
             type="text"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
-            placeholder={isCreator ? "Enter Scrum Master name" : "Enter your name"}
+            placeholder={!hasExistingScrumMaster && isCreator ? "Enter Scrum Master name" : "Enter your name"}
             required
           />
-          <button type="submit">{isCreator ? 'Join as Scrum Master' : 'Join Room'}</button>
+          <button type="submit">
+            {!hasExistingScrumMaster && isCreator ? 'Join as Scrum Master' : 'Join Room'}
+          </button>
         </form>
       </div>
     );
