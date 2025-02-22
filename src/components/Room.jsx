@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import VotingCard from './VotingCard';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import '../styles/global.css';
-import { FaUser } from 'react-icons/fa';
+import { FaUser, FaPlus } from 'react-icons/fa';
 
 const Room = () => {
   const { roomId } = useParams();
@@ -11,6 +11,7 @@ const Room = () => {
   const queryParams = new URLSearchParams(location.search);
   const isCreator = queryParams.get('isCreator') === 'true';
   const taskName = queryParams.get('task');
+  const taskDescription = queryParams.get('description');
   
   const [userName, setUserName] = useState('');
   const [isNameSubmitted, setIsNameSubmitted] = useState(false);
@@ -273,21 +274,52 @@ const Room = () => {
         </header>
         
         <div className="container">
-          <div className="card">
-            <h2 style={{ color: 'var(--primary)', marginBottom: '2rem' }}>
-              {!hasExistingScrumMaster && isCreator ? 'Digite o Nome do Scrum Master' : 'Entre na Sala de Planning Poker'}
+          <div className="card name-entry-card" style={{ 
+            maxWidth: '500px', 
+            margin: '4rem auto',
+            textAlign: 'center',
+            padding: '3rem'
+          }}>
+            <h2 style={{ 
+              color: 'var(--text-light)', 
+              marginBottom: '2rem',
+              fontSize: '1.8rem' 
+            }}>
+              {!hasExistingScrumMaster && isCreator ? 'Digite seu nome para entrar como Scrum Master' : 'Digite seu nome para entrar como membro do time'}
             </h2>
-            <form onSubmit={handleNameSubmit}>
+            <form onSubmit={handleNameSubmit} style={{ 
+              maxWidth: '320px', 
+              margin: '0 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              width: '100%'
+            }}>
               <input
                 className="input-field"
                 type="text"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
-                placeholder={!hasExistingScrumMaster && isCreator ? "Digite o nome do Scrum Master" : "Digite seu nome"}
+                placeholder={!hasExistingScrumMaster && isCreator ? "Digite seu nome" : "Digite seu nome"}
                 required
+                style={{
+                  textAlign: 'center',
+                  fontSize: '1.1rem',
+                  padding: '1rem',
+                  width: '100%'
+                }}
               />
-              <button type="submit" className="button-primary" style={{ marginTop: '1rem' }}>
-                {!hasExistingScrumMaster && isCreator ? 'Entrar como Scrum Master' : 'Entrar na Sala'}
+              <button 
+                type="submit" 
+                className="button-primary" 
+                style={{ 
+                  marginTop: '1.5rem',
+                  width: 'auto',
+                  padding: '1rem 2rem',
+                  fontSize: '1.1rem'
+                }}
+              >
+                {!hasExistingScrumMaster && isCreator ? 'Entrar no Jogo' : 'Entrar no Jogo'}
               </button>
             </form>
           </div>
@@ -305,10 +337,31 @@ const Room = () => {
         <div className="title-section">
           <h1>Poquer de Planejamento</h1>
         </div>
-        <div className="user-section">
-          <span>{userName}</span>
-          <div className="user-icon">
-            <FaUser />
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '2rem'
+        }}>
+          <button 
+            onClick={() => navigate('/')} 
+            className="button-secondary"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.8rem 1.2rem',
+              fontSize: '0.9rem',
+              letterSpacing: '0.5px'
+            }}
+          >
+            <span>Novo jogo</span>
+            <FaPlus />
+          </button>
+          <div className="user-section">
+            <span>{userName}</span>
+            <div className="user-icon">
+              <FaUser />
+            </div>
           </div>
         </div>
       </header>
@@ -317,16 +370,47 @@ const Room = () => {
         <div className="card">
           <div style={{ 
             display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
+            flexDirection: 'column',
+            gap: '1rem',
             marginBottom: '2rem'
           }}>
-            <h2 style={{ color: 'var(--primary)', margin: 0 }}>
-              Tarefa: {decodeURIComponent(taskName)}
-            </h2>
-            <button onClick={copyRoomLink} className="button-primary">
-              Compartilhar Link da Sala
-            </button>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+            }}>
+              <h1 style={{ color: 'var(--primary)', margin: 0 }}>
+                 {decodeURIComponent(taskName)}
+              </h1>
+              <button onClick={copyRoomLink} className="button-primary">
+                Compartilhar Link da Sala
+              </button>
+            </div>
+            <br/>
+            <h3 style={{ color: 'var(--primary)' }}>Descrição da Tarefa:</h3>
+            {taskDescription && (
+              <div style={{
+                background: 'var(--background)',
+                padding: '1rem',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)'
+              }}>
+                <h3 style={{ 
+                  color: 'var(--text-light)',
+                  margin: '0 0 0.5rem 0',
+                  fontSize: '1rem'
+                }}>
+                </h3>
+                <p style={{ 
+                  margin: 0,
+                  color: 'var(--text-light)',
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {decodeURIComponent(taskDescription)}
+                </p>
+              </div>
+            )}
+            <br/>
           </div>
 
           <div style={{ 
