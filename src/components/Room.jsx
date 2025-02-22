@@ -134,6 +134,14 @@ const Room = () => {
             );
             break;
 
+          case 'RESET_VOTES':
+            setAllVotesRevealed(false);
+            setUserVote(null);
+            setParticipants(prev =>
+              prev.map(p => ({ ...p, vote: null }))
+            );
+            break;
+
           default:
             break;
         }
@@ -198,13 +206,11 @@ const Room = () => {
   };
 
   const handleVote = (points) => {
-    if (broadcastChannel) {
+    if (broadcastChannel && !allVotesRevealed) {
       setUserVote(points);
-      // Update local state
       setParticipants(prev =>
         prev.map(p => p.name === userName ? { ...p, vote: points } : p)
       );
-      // Broadcast vote
       broadcastChannel.postMessage({
         type: 'VOTE',
         data: { userName, vote: points }
@@ -235,6 +241,20 @@ const Room = () => {
     if (votes.length === 0) return '-';
     const average = votes.reduce((a, b) => a + b, 0) / votes.length;
     return average.toFixed(1);
+  };
+
+  const resetVotes = () => {
+    if (broadcastChannel) {
+      setAllVotesRevealed(false);
+      setUserVote(null);
+      setParticipants(prev =>
+        prev.map(p => ({ ...p, vote: null }))
+      );
+      
+      broadcastChannel.postMessage({
+        type: 'RESET_VOTES'
+      });
+    }
   };
 
   if (!isNameSubmitted) {
@@ -360,12 +380,14 @@ const Room = () => {
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
                 gap: '1rem',
-                marginTop: '1rem'
+                marginTop: '1rem',
+                opacity: allVotesRevealed ? '0.6' : '1'
               }}>
                 {pointOptions.map(points => (
                   <button
                     key={points}
                     onClick={() => handleVote(points)}
+                    disabled={allVotesRevealed}
                     style={{
                       background: userVote === points ? 'var(--gradient-1)' : 'white',
                       color: userVote === points ? 'white' : 'var(--primary)',
@@ -374,32 +396,47 @@ const Room = () => {
                       padding: '1rem',
                       fontSize: '1.2rem',
                       fontWeight: 'bold',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
+                      cursor: allVotesRevealed ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s',
+                      opacity: allVotesRevealed ? '0.7' : '1'
                     }}
                   >
                     {points}
                   </button>
                 ))}
               </div>
+
+              {allVotesRevealed && (
+                <div style={{
+                  background: 'var(--gradient-1)',
+                  color: 'white',
+                  padding: '1.5rem',
+                  borderRadius: '8px',
+                  marginTop: '2rem'
+                }}>
+                  <h4 style={{ margin: '0 0 1rem 0' }}>Resultado da Votação</h4>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div style={{ display: 'flex', gap: '2rem' }}>
+                      <p style={{ margin: 0 }}>Votos: {participants.filter(p => p.vote !== null).length} / {participants.length}</p>
+                      <p style={{ margin: 0 }}>Média: {calculateAverage()}</p>
+                    </div>
+                    {isScrumMaster && (
+                      <button 
+                        onClick={resetVotes} 
+                        className="button-secondary"
+                      >
+                        Nova Votação
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-
-          {allVotesRevealed && (
-            <div style={{
-              background: 'var(--gradient-1)',
-              color: 'white',
-              padding: '1.5rem',
-              borderRadius: '8px',
-              marginTop: '2rem'
-            }}>
-              <h4 style={{ margin: '0 0 1rem 0' }}>Resultado da Votação</h4>
-              <div style={{ display: 'flex', gap: '2rem' }}>
-                <p style={{ margin: 0 }}>Votos: {participants.filter(p => p.vote !== null).length} / {participants.length}</p>
-                <p style={{ margin: 0 }}>Média: {calculateAverage()}</p>
-              </div>
-            </div>
-          )}
 
           {isScrumMaster && !allVotesRevealed && participants.every(p => p.vote !== null) && participants.length > 0 && (
             <button 

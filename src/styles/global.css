@@ -102,6 +102,27 @@ body {
   box-shadow: 0 5px 15px rgba(109, 91, 238, 0.3);
 }
 
+.button-secondary {
+  background: transparent;
+  color: var(--text-light);
+  border: 2px solid var(--text-light);
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.button-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+button:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
 .input-field {
   background: var(--background);
   border: 2px solid var(--border-color);
@@ -146,6 +167,13 @@ h2, h3, h4 {
 .voting-cards button[data-selected="true"] {
   background: var(--gradient-1) !important;
   border-color: var(--primary) !important;
+}
+
+.voting-cards button[disabled] {
+  background: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
 }
 
 /* Enhance scrollbar for dark theme */
