@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import VotingCard from './VotingCard';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import '../styles/global.css';
+import { FaUser } from 'react-icons/fa';
 
 const Room = () => {
   const { roomId } = useParams();
@@ -237,90 +239,179 @@ const Room = () => {
 
   if (!isNameSubmitted) {
     return (
-      <div className="name-entry">
-        <h2>{!hasExistingScrumMaster && isCreator ? 'Digite o Nome do Scrum Master' : 'Entre na Sala de Planning Poker'}</h2>
-        <form onSubmit={handleNameSubmit}>
-          <input
-            type="text"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-            placeholder={!hasExistingScrumMaster && isCreator ? "Digite o nome do Scrum Master" : "Digite seu nome"}
-            required
-          />
-          <button type="submit">
-            {!hasExistingScrumMaster && isCreator ? 'Entrar como Scrum Master' : 'Entrar na Sala'}
-          </button>
-        </form>
+      <div>
+        <header className="app-header">
+          <div className="logo-section">
+            <img src="/smarttalks.avif" alt="Smart Talks Logo" />
+          </div>
+          <div className="title-section">
+            <h1>Poquer de Planejamento</h1>
+          </div>
+          <div className="user-section">
+            {/* Empty div to maintain layout */}
+          </div>
+        </header>
+        
+        <div className="container">
+          <div className="card">
+            <h2 style={{ color: 'var(--primary)', marginBottom: '2rem' }}>
+              {!hasExistingScrumMaster && isCreator ? 'Digite o Nome do Scrum Master' : 'Entre na Sala de Planning Poker'}
+            </h2>
+            <form onSubmit={handleNameSubmit}>
+              <input
+                className="input-field"
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder={!hasExistingScrumMaster && isCreator ? "Digite o nome do Scrum Master" : "Digite seu nome"}
+                required
+              />
+              <button type="submit" className="button-primary" style={{ marginTop: '1rem' }}>
+                {!hasExistingScrumMaster && isCreator ? 'Entrar como Scrum Master' : 'Entrar na Sala'}
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="room">
-      <div className="room-header">
-        <h2>Sala de Planning Poker</h2>
-        <div className="task-name">
-          <h3>Tarefa: {decodeURIComponent(taskName)}</h3>
+    <div>
+      <header className="app-header">
+        <div className="logo-section">
+          <img src="/smarttalks.avif" alt="Smart Talks Logo" />
         </div>
-      </div>
-      <div className="room-info">
-        <button onClick={copyRoomLink} className="share-button">
-          Compartilhar Link da Sala
-        </button>
-        <span className={`role-badge ${isScrumMaster ? 'scrum-master' : 'team-member'}`}>
-          {isScrumMaster ? 'Scrum Master' : 'Membro do Time'}
-        </span>
-      </div>
-      
-      <div className="participants">
-        <h3>Participantes:</h3>
-        <ul>
-          {participants.map(participant => (
-            <li key={participant.name} className="participant-item">
-              <div className="participant-info">
-                <span className="participant-name">{participant.name}</span>
-                <span className={`role-badge ${participant.isScrumMaster ? 'scrum-master' : 'team-member'}`}>
-                  {participant.isScrumMaster ? 'Scrum Master' : 'Membro do Time'}
-                </span>
+        <div className="title-section">
+          <h1>Poquer de Planejamento</h1>
+        </div>
+        <div className="user-section">
+          <span>{userName}</span>
+          <div className="user-icon">
+            <FaUser />
+          </div>
+        </div>
+      </header>
+
+      <div className="container">
+        <div className="card">
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            marginBottom: '2rem'
+          }}>
+            <h2 style={{ color: 'var(--primary)', margin: 0 }}>
+              Tarefa: {decodeURIComponent(taskName)}
+            </h2>
+            <button onClick={copyRoomLink} className="button-primary">
+              Compartilhar Link da Sala
+            </button>
+          </div>
+
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 2fr',
+            gap: '2rem'
+          }}>
+            <div className="participants-section">
+              <h3 style={{ color: 'var(--primary)' }}>Participantes</h3>
+              <ul style={{ 
+                listStyle: 'none', 
+                padding: 0,
+                margin: 0 
+              }}>
+                {participants.map(participant => (
+                  <li key={participant.name} style={{
+                    background: 'var(--background)',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    marginBottom: '0.5rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <span>{participant.name}</span>
+                      <span style={{
+                        background: participant.isScrumMaster ? 'var(--primary)' : 'var(--primary-light)',
+                        color: 'white',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '4px',
+                        fontSize: '0.8rem',
+                        marginLeft: '0.5rem'
+                      }}>
+                        {participant.isScrumMaster ? 'Scrum Master' : 'Membro do Time'}
+                      </span>
+                    </div>
+                    <div style={{ color: 'var(--primary)' }}>
+                      {allVotesRevealed ? 
+                        (participant.vote !== null ? participant.vote : 'Sem voto') : 
+                        (participant.vote ? '✓' : 'Não votou')}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="voting-section">
+              <h3 style={{ color: 'var(--primary)' }}>Sua Estimativa</h3>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
+                gap: '1rem',
+                marginTop: '1rem'
+              }}>
+                {pointOptions.map(points => (
+                  <button
+                    key={points}
+                    onClick={() => handleVote(points)}
+                    style={{
+                      background: userVote === points ? 'var(--gradient-1)' : 'white',
+                      color: userVote === points ? 'white' : 'var(--primary)',
+                      border: `2px solid ${userVote === points ? 'transparent' : 'var(--primary)'}`,
+                      borderRadius: '8px',
+                      padding: '1rem',
+                      fontSize: '1.2rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {points}
+                  </button>
+                ))}
               </div>
-              <div className="vote-status">
-                {allVotesRevealed ? 
-                  (participant.vote !== null ? participant.vote : 'Sem voto') : 
-                  (participant.vote ? '✓' : 'Não votou')}
-              </div>
-            </li>
-          ))}
-        </ul>
-        {allVotesRevealed && (
-          <div className="vote-summary">
-            <h4>Resultado da Votação</h4>
-            <div className="vote-stats">
-              <p>Votos: {participants.filter(p => p.vote !== null).length} / {participants.length}</p>
-              <p>Média: {calculateAverage()}</p>
             </div>
           </div>
-        )}
-      </div>
 
-      <div className="voting-area">
-        <h3>Selecione sua estimativa:</h3>
-        <div className="voting-cards">
-          {pointOptions.map(points => (
-            <VotingCard
-              key={points}
-              points={points}
-              selected={userVote === points}
-              onClick={() => handleVote(points)}
-            />
-          ))}
+          {allVotesRevealed && (
+            <div style={{
+              background: 'var(--gradient-1)',
+              color: 'white',
+              padding: '1.5rem',
+              borderRadius: '8px',
+              marginTop: '2rem'
+            }}>
+              <h4 style={{ margin: '0 0 1rem 0' }}>Resultado da Votação</h4>
+              <div style={{ display: 'flex', gap: '2rem' }}>
+                <p style={{ margin: 0 }}>Votos: {participants.filter(p => p.vote !== null).length} / {participants.length}</p>
+                <p style={{ margin: 0 }}>Média: {calculateAverage()}</p>
+              </div>
+            </div>
+          )}
+
+          {isScrumMaster && !allVotesRevealed && participants.every(p => p.vote !== null) && participants.length > 0 && (
+            <button 
+              onClick={revealVotes} 
+              className="button-primary"
+              style={{ marginTop: '2rem', width: '100%' }}
+            >
+              Revelar Todos os Votos
+            </button>
+          )}
         </div>
       </div>
-
-      {isScrumMaster && !allVotesRevealed && participants.every(p => p.vote !== null) && participants.length > 0 && (
-        <button onClick={revealVotes} className="reveal-button">
-          Revelar Todos os Votos
-        </button>
-      )}
     </div>
   );
 };

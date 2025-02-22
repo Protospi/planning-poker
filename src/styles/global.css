@@ -1,0 +1,167 @@
+:root {
+  --primary: #6D5BEE;
+  --primary-light: #8677F0;
+  --primary-dark: #5445CB;
+  --gradient-1: linear-gradient(135deg, #6D5BEE 0%, #8677F0 100%);
+  --gradient-2: linear-gradient(45deg, #5445CB 0%, #6D5BEE 100%);
+  --text-light: #FFFFFF;
+  --text-dark: #E1E1E1;
+  --background: #1A1A1A;
+  --card-bg: #2D2D2D;
+  --shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  --border-color: #3D3D3D;
+  --hover-bg: #363636;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text-light);
+}
+
+.app-header {
+  background: linear-gradient(135deg, #2D2D2D 0%, #1A1A1A 100%);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 2rem;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  box-shadow: var(--shadow);
+}
+
+.app-header .logo-section {
+  display: flex;
+  align-items: center;
+}
+
+.app-header .title-section {
+  text-align: center;
+}
+
+.app-header .user-section {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  color: var(--text-light);
+}
+
+.user-icon {
+  background: var(--primary);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-header img {
+  height: 40px;
+  margin-right: 1rem;
+}
+
+.app-header h1 {
+  color: var(--text-light);
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
+}
+
+.button-primary {
+  background: var(--gradient-1);
+  color: var(--text-light);
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.button-primary:hover {
+  transform: translateY(-2px);
+  background: var(--gradient-2);
+  box-shadow: 0 5px 15px rgba(109, 91, 238, 0.3);
+}
+
+.input-field {
+  background: var(--background);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  width: 100%;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  color: var(--text-light);
+}
+
+.input-field:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(109, 91, 238, 0.1);
+}
+
+.input-field::placeholder {
+  color: #666666;
+}
+
+/* Additional dark theme specific styles */
+h2, h3, h4 {
+  color: var(--text-light) !important;
+}
+
+.participant-item {
+  background: var(--background) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.voting-cards button {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-light) !important;
+}
+
+.voting-cards button:hover {
+  background: var(--hover-bg) !important;
+}
+
+.voting-cards button[data-selected="true"] {
+  background: var(--gradient-1) !important;
+  border-color: var(--primary) !important;
+}
+
+/* Enhance scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+} 
