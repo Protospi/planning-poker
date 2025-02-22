@@ -18,21 +18,21 @@ const LandingPage = () => {
     <div className="landing-page">
       <h1>Planning Poker</h1>
       <div className="create-room-form">
-        <h2>Create a New Room</h2>
+        <h2>Criar Nova Sala</h2>
         <form onSubmit={handleCreateRoom}>
           <div className="form-group">
-            <label htmlFor="taskName">Task Name:</label>
+            <label htmlFor="taskName">Nome da Tarefa:</label>
             <input
               type="text"
               id="taskName"
               value={taskName}
               onChange={(e) => setTaskName(e.target.value)}
-              placeholder="Enter task name"
+              placeholder="Digite o nome da tarefa"
               required
             />
           </div>
           <button type="submit" className="create-room-button">
-            Create Room
+            Criar Sala
           </button>
         </form>
       </div>

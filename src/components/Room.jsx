@@ -238,17 +238,17 @@ const Room = () => {
   if (!isNameSubmitted) {
     return (
       <div className="name-entry">
-        <h2>{!hasExistingScrumMaster && isCreator ? 'Enter Scrum Master Name' : 'Join the Planning Poker Room'}</h2>
+        <h2>{!hasExistingScrumMaster && isCreator ? 'Digite o Nome do Scrum Master' : 'Entre na Sala de Planning Poker'}</h2>
         <form onSubmit={handleNameSubmit}>
           <input
             type="text"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
-            placeholder={!hasExistingScrumMaster && isCreator ? "Enter Scrum Master name" : "Enter your name"}
+            placeholder={!hasExistingScrumMaster && isCreator ? "Digite o nome do Scrum Master" : "Digite seu nome"}
             required
           />
           <button type="submit">
-            {!hasExistingScrumMaster && isCreator ? 'Join as Scrum Master' : 'Join Room'}
+            {!hasExistingScrumMaster && isCreator ? 'Entrar como Scrum Master' : 'Entrar na Sala'}
           </button>
         </form>
       </div>
@@ -258,52 +258,52 @@ const Room = () => {
   return (
     <div className="room">
       <div className="room-header">
-        <h2>Planning Poker Room</h2>
+        <h2>Sala de Planning Poker</h2>
         <div className="task-name">
-          <h3>Task: {decodeURIComponent(taskName)}</h3>
+          <h3>Tarefa: {decodeURIComponent(taskName)}</h3>
         </div>
       </div>
       <div className="room-info">
         <button onClick={copyRoomLink} className="share-button">
-          Share Room Link
+          Compartilhar Link da Sala
         </button>
         <span className={`role-badge ${isScrumMaster ? 'scrum-master' : 'team-member'}`}>
-          {isScrumMaster ? 'Scrum Master' : 'Team Member'}
+          {isScrumMaster ? 'Scrum Master' : 'Membro do Time'}
         </span>
       </div>
       
       <div className="participants">
-        <h3>Participants:</h3>
+        <h3>Participantes:</h3>
         <ul>
           {participants.map(participant => (
             <li key={participant.name} className="participant-item">
               <div className="participant-info">
                 <span className="participant-name">{participant.name}</span>
                 <span className={`role-badge ${participant.isScrumMaster ? 'scrum-master' : 'team-member'}`}>
-                  {participant.isScrumMaster ? 'Scrum Master' : 'Team Member'}
+                  {participant.isScrumMaster ? 'Scrum Master' : 'Membro do Time'}
                 </span>
               </div>
               <div className="vote-status">
                 {allVotesRevealed ? 
-                  (participant.vote !== null ? participant.vote : 'No vote') : 
-                  (participant.vote ? '✓' : 'Not voted')}
+                  (participant.vote !== null ? participant.vote : 'Sem voto') : 
+                  (participant.vote ? '✓' : 'Não votou')}
               </div>
             </li>
           ))}
         </ul>
         {allVotesRevealed && (
           <div className="vote-summary">
-            <h4>Voting Results</h4>
+            <h4>Resultado da Votação</h4>
             <div className="vote-stats">
-              <p>Votes: {participants.filter(p => p.vote !== null).length} / {participants.length}</p>
-              <p>Average: {calculateAverage()}</p>
+              <p>Votos: {participants.filter(p => p.vote !== null).length} / {participants.length}</p>
+              <p>Média: {calculateAverage()}</p>
             </div>
           </div>
         )}
       </div>
 
       <div className="voting-area">
-        <h3>Select your estimate:</h3>
+        <h3>Selecione sua estimativa:</h3>
         <div className="voting-cards">
           {pointOptions.map(points => (
             <VotingCard
@@ -318,7 +318,7 @@ const Room = () => {
 
       {isScrumMaster && !allVotesRevealed && participants.every(p => p.vote !== null) && participants.length > 0 && (
         <button onClick={revealVotes} className="reveal-button">
-          Reveal All Votes
+          Revelar Todos os Votos
         </button>
       )}
     </div>
