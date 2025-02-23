@@ -32,6 +32,13 @@ const Room = () => {
   const pointOptions = [1, 2, 3, 5, 8];
   const isScrumMaster = userName === scrumMasterName;
 
+  // First, let's add these color variables at the top of the component
+  const tagColors = {
+    scrumMaster: '#ff6b6b',  // light red
+    teamMember: '#69db7c',   // light green
+    ai: 'var(--primary-light)'  // keeping purple for AI
+  };
+
   // Remove the random room ID generation since rooms are now created from landing page
   useEffect(() => {
     if (!roomId) {
@@ -280,14 +287,25 @@ const Room = () => {
     alert('Room link copied to clipboard!');
   };
 
-  // Move calculateAverage inside the component
+  // Modify calculateAverage inside the component
   const calculateAverage = () => {
     const votes = participants
       .filter(p => p.vote !== null)
       .map(p => p.vote);
     if (votes.length === 0) return '-';
+    
     const average = votes.reduce((a, b) => a + b, 0) / votes.length;
-    return average.toFixed(1);
+    
+    // Round to nearest point value
+    const pointOptions = [1, 2, 3, 5, 8];
+    const roundedAverage = Math.round(average);
+    
+    // Find the closest valid point value
+    const closestPoint = pointOptions.reduce((prev, curr) => {
+      return Math.abs(curr - average) < Math.abs(prev - average) ? curr : prev;
+    });
+    
+    return closestPoint.toString();
   };
 
   const resetVotes = () => {
@@ -317,7 +335,7 @@ const Room = () => {
             <img src="/smarttalks.avif" alt="Smart Talks Logo" />
           </div>
           <div className="title-section">
-            <h1>Poquer de Planejamento</h1>
+            <h1 style={{ color: 'var(--primary-light)' }}>Poquer de Planejamento</h1>
           </div>
           <div className="user-section">
             {/* Empty div to maintain layout */}
@@ -386,7 +404,7 @@ const Room = () => {
           <img src="/smarttalks.avif" alt="Smart Talks Logo" />
         </div>
         <div className="title-section">
-          <h1>Poquer de Planejamento</h1>
+          <h1 style={{ color: 'var(--primary-light)' }}>Poquer de Planejamento</h1>
         </div>
         <div style={{
           display: 'flex',
@@ -430,7 +448,7 @@ const Room = () => {
               justifyContent: 'space-between', 
               alignItems: 'center',
             }}>
-              <h1 style={{ color: 'var(--primary)', margin: 0 }}>
+              <h1 style={{ color: 'var(--primary-light)', margin: 0, fontSize: '1.6rem' }}>
                  {decodeURIComponent(taskName)}
               </h1>
               <button onClick={copyRoomLink} className="button-primary">
@@ -455,7 +473,8 @@ const Room = () => {
                 <p style={{ 
                   margin: 0,
                   color: 'var(--text-light)',
-                  whiteSpace: 'pre-wrap'
+                  whiteSpace: 'pre-wrap',
+                  fontSize: '1.2rem'
                 }}>
                   {decodeURIComponent(taskDescription)}
                 </p>
@@ -483,23 +502,29 @@ const Room = () => {
                     borderRadius: '8px',
                     marginBottom: '0.5rem',
                     display: 'flex',
+                    fontSize: '1.2rem',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    paddingRight: '1rem'
                   }}>
                     <div>
                       <span>{participant.name}</span>
                       <span style={{
-                        background: participant.isScrumMaster ? 'var(--primary)' : 'var(--primary-light)',
+                        background: participant.name === 'Izi' ? tagColors.ai :
+                                   participant.isScrumMaster ? tagColors.scrumMaster :
+                                   tagColors.teamMember,
                         color: 'white',
-                        padding: '0.2rem 0.5rem',
+                        padding: '0.2rem 0.5rem 0.2rem 0.5rem',
                         borderRadius: '4px',
-                        fontSize: '0.8rem',
+                        fontSize: '1rem',
                         marginLeft: '0.5rem'
                       }}>
-                        {participant.isScrumMaster ? 'Scrum Master' : 'Membro do Time'}
+                        {participant.name === 'Izi' ? 'IA' :
+                         participant.isScrumMaster ? 'Scrum Master' :
+                         'Membro do Time'}
                       </span>
                     </div>
-                    <div style={{ color: 'var(--primary)' }}>
+                    <div style={{ color: 'var(--primary-light)', fontSize: '1.3rem' }}>
                       {allVotesRevealed ? 
                         (participant.vote !== null ? participant.vote : 'Sem voto') : 
                         (participant.vote ? '✓' : 'Não votou')}
@@ -529,7 +554,7 @@ const Room = () => {
                       border: `2px solid ${userVote === points ? 'transparent' : 'var(--primary)'}`,
                       borderRadius: '8px',
                       padding: '1rem',
-                      fontSize: '1.2rem',
+                      fontSize: '1.3rem',
                       fontWeight: 'bold',
                       cursor: allVotesRevealed ? 'not-allowed' : 'pointer',
                       transition: 'all 0.2s',
@@ -543,13 +568,14 @@ const Room = () => {
 
               {allVotesRevealed && (
                 <div style={{
-                  background: 'var(--gradient-1)',
+                  background: 'var(--primary-light)',
                   color: 'white',
                   padding: '1.5rem',
                   borderRadius: '8px',
-                  marginTop: '2rem'
+                  marginTop: '2rem',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                 }}>
-                  <h4 style={{ margin: '0 0 1rem 0' }}>Resultado da Votação</h4>
+                  <h3 style={{ margin: '0 0 1rem 0' }}>Resultado da Votação</h3>
                   <div style={{ 
                     display: 'flex', 
                     flexDirection: 'column',
@@ -574,15 +600,15 @@ const Room = () => {
                       )}
                     </div>
                     
-                    {/* Add AI explanation */}
                     {aiParticipant.explanation && (
                       <div style={{
-                        background: 'rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.15)',
                         padding: '1rem',
                         borderRadius: '4px',
-                        marginTop: '1rem'
+                        marginTop: '1rem',
+                        fontSize: '1rem'
                       }}>
-                        <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                        <p style={{ margin: 0, fontSize: '1.1rem' }}>
                           <strong>Justificativa da IA:</strong> {aiParticipant.explanation}
                         </p>
                       </div>
