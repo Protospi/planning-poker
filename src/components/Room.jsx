@@ -3,6 +3,7 @@ import VotingCard from './VotingCard';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import '../styles/global.css';
 import { FaUser, FaPlus } from 'react-icons/fa';
+import { getAIVote } from '../utils/aiVoting';
 
 const Room = () => {
   const { roomId } = useParams();
@@ -21,6 +22,12 @@ const Room = () => {
   const [broadcastChannel, setBroadcastChannel] = useState(null);
   const [scrumMasterName, setScrumMasterName] = useState(null);
   const [hasExistingScrumMaster, setHasExistingScrumMaster] = useState(false);
+  const [aiParticipant, setAiParticipant] = useState({
+    name: 'Izi',
+    vote: null,
+    isScrumMaster: false,
+    explanation: null
+  });
 
   const pointOptions = [1, 2, 3, 5, 8];
   const isScrumMaster = userName === scrumMasterName;
@@ -161,6 +168,36 @@ const Room = () => {
     }
   }, [roomId, isNameSubmitted, userName]);
 
+  // Add this effect to handle AI voting after all human participants vote
+  useEffect(() => {
+    const handleAIVoting = async () => {
+      if (!allVotesRevealed && 
+          participants.length > 1 && // More than just AI
+          participants.every(p => p.name === 'Izi' || p.vote !== null)) {
+        
+        const aiVote = await getAIVote(
+          decodeURIComponent(taskName), 
+          decodeURIComponent(taskDescription)
+        );
+
+        setAiParticipant(prev => ({
+          ...prev,
+          vote: aiVote.points,
+          explanation: aiVote.explanation
+        }));
+
+        if (broadcastChannel) {
+          broadcastChannel.postMessage({
+            type: 'VOTE',
+            data: { userName: 'Izi', vote: aiVote.points }
+          });
+        }
+      }
+    };
+
+    handleAIVoting();
+  }, [participants, allVotesRevealed, taskName, taskDescription]);
+
   const handleNameSubmit = (e) => {
     e.preventDefault();
     if (userName.trim() && broadcastChannel) {
@@ -179,6 +216,15 @@ const Room = () => {
       
       if (shouldBeScrumMaster) {
         setScrumMasterName(trimmedName);
+        // Add AI participant when Scrum Master joins
+        setParticipants(prev => [...prev, aiParticipant]);
+        broadcastChannel.postMessage({
+          type: 'JOIN_ROOM',
+          data: { 
+            userName: 'Izi',
+            isScrumMaster: false
+          }
+        });
       }
 
       const newParticipant = { 
@@ -251,6 +297,11 @@ const Room = () => {
       setParticipants(prev =>
         prev.map(p => ({ ...p, vote: null }))
       );
+      setAiParticipant(prev => ({
+        ...prev,
+        vote: null,
+        explanation: null
+      }));
       
       broadcastChannel.postMessage({
         type: 'RESET_VOTES'
@@ -501,20 +552,40 @@ const Room = () => {
                   <h4 style={{ margin: '0 0 1rem 0' }}>Resultado da Votação</h4>
                   <div style={{ 
                     display: 'flex', 
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
+                    flexDirection: 'column',
+                    gap: '1rem'
                   }}>
-                    <div style={{ display: 'flex', gap: '2rem' }}>
-                      <p style={{ margin: 0 }}>Votos: {participants.filter(p => p.vote !== null).length} / {participants.length}</p>
-                      <p style={{ margin: 0 }}>Média: {calculateAverage()}</p>
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{ display: 'flex', gap: '2rem' }}>
+                        <p style={{ margin: 0 }}>Votos: {participants.filter(p => p.vote !== null).length} / {participants.length}</p>
+                        <p style={{ margin: 0 }}>Média: {calculateAverage()}</p>
+                      </div>
+                      {isScrumMaster && (
+                        <button 
+                          onClick={resetVotes} 
+                          className="button-secondary"
+                        >
+                          Nova Votação
+                        </button>
+                      )}
                     </div>
-                    {isScrumMaster && (
-                      <button 
-                        onClick={resetVotes} 
-                        className="button-secondary"
-                      >
-                        Nova Votação
-                      </button>
+                    
+                    {/* Add AI explanation */}
+                    {aiParticipant.explanation && (
+                      <div style={{
+                        background: 'rgba(255,255,255,0.1)',
+                        padding: '1rem',
+                        borderRadius: '4px',
+                        marginTop: '1rem'
+                      }}>
+                        <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                          <strong>Justificativa da IA:</strong> {aiParticipant.explanation}
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>
