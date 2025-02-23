@@ -459,7 +459,7 @@ const Room = () => {
             </div>
 
             <div className="voting-section">
-              <h3 style={{ color: 'var(--primary)' }}>Sua Estimativa</h3>
+              <h3 style={{ color: 'var(--primary)' }}>Estimativa de Esforço</h3>
               <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
