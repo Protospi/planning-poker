@@ -633,7 +633,7 @@ const Room = () => {
           <img src="/smarttalks.avif" alt="Smart Talks Logo" />
         </div>
         <div className="title-section">
-          <h1 style={{ color: 'var(--primary-light)' }}>Poquer de Planejamento</h1>
+          <h1 style={{ color: 'var(--primary-light)' }}>Pôquer de Planejamento</h1>
         </div>
         <div style={{
           display: 'flex',
@@ -684,8 +684,7 @@ const Room = () => {
                 Compartilhar Link da Sala
               </button>
             </div>
-            <br/>
-            <h3 style={{ color: 'var(--primary)' }}>Descrição da Tarefa:</h3>
+            
             {taskDescription && (
               <div style={{
                 background: 'var(--background)',
@@ -709,7 +708,6 @@ const Room = () => {
                 </p>
               </div>
             )}
-            <br/>
           </div>
 
           <div style={{ 

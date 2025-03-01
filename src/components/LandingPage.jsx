@@ -85,16 +85,16 @@ const LandingPage = () => {
       <div className="container">
         <div className="card" style={{ 
           width: '90%',
-          margin: '3rem auto',
-          padding: '3rem',
+          margin: '2rem auto',
+          padding: '2rem',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center'
         }}>
           <h2 style={{ 
             color: 'var(--text-light)', 
-            marginBottom: '2rem',
-            fontSize: '2.5rem',
+            marginBottom: '1.5rem',
+            fontSize: '2rem',
             fontWeight: '500'
           }}>
             Criar Novo Jogo
@@ -104,16 +104,16 @@ const LandingPage = () => {
             width: '70%',
             display: 'flex',
             flexDirection: 'column',
-            gap: '1.5rem'
+            gap: '1rem'
           }}>
             <div className="form-group">
               <label 
                 htmlFor="taskName" 
                 style={{ 
                   display: 'block', 
-                  marginBottom: '0.75rem',
+                  marginBottom: '0.5rem',
                   color: 'var(--text-light)',
-                  fontSize: '1.25rem',
+                  fontSize: '1.1rem',
                   fontWeight: '500'
                 }}
               >
@@ -129,8 +129,8 @@ const LandingPage = () => {
                 required
                 style={{
                   width: '100%',
-                  padding: '1.2rem',
-                  fontSize: '1.1rem',
+                  padding: '0.8rem',
+                  fontSize: '1rem',
                   backgroundColor: 'rgba(0, 0, 0, 0.2)'
                 }}
               />
@@ -141,9 +141,9 @@ const LandingPage = () => {
                 htmlFor="taskDescription" 
                 style={{ 
                   display: 'block', 
-                  marginBottom: '0.75rem',
+                  marginBottom: '0.5rem',
                   color: 'var(--text-light)',
-                  fontSize: '1.25rem',
+                  fontSize: '1.1rem',
                   fontWeight: '500'
                 }}
               >
@@ -157,10 +157,10 @@ const LandingPage = () => {
                 placeholder="Digite a descrição da tarefa"
                 style={{ 
                   width: '100%',
-                  minHeight: '120px',
+                  minHeight: '100px',
                   resize: 'vertical',
-                  padding: '1.2rem',
-                  fontSize: '1.1rem',
+                  padding: '0.8rem',
+                  fontSize: '1rem',
                   backgroundColor: 'rgba(0, 0, 0, 0.2)'
                 }}
               />
@@ -169,14 +169,14 @@ const LandingPage = () => {
             <div style={{
               display: 'flex',
               justifyContent: 'center',
-              marginTop: '1rem'
+              marginTop: '0.8rem'
             }}>
               <button 
                 type="submit" 
                 className="button-primary"
                 style={{
-                  padding: '1.2rem 4rem',
-                  fontSize: '1.2rem',
+                  padding: '0.8rem 3rem',
+                  fontSize: '1.1rem',
                   letterSpacing: '1px'
                 }}
                 onClick={handleCreateRoom}
