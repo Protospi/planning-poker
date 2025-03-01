@@ -52,7 +52,7 @@ const LandingPage = () => {
           <img src="/smarttalks.avif" alt="Smart Talks Logo" />
         </div>
         <div className="title-section">
-          <h1>Poquer de Planejamento</h1>
+          <h1 style={{ color: 'var(--primary-light)' }}>Pôquer de Planejamento</h1>
         </div>
         <div style={{
           display: 'flex',

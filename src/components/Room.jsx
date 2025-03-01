@@ -485,22 +485,43 @@ const Room = () => {
     return closestPoint.toString();
   };
 
-  const resetVotes = () => {
+  const resetVotes = async () => {
     if (broadcastChannel) {
-      setAllVotesRevealed(false);
-      setUserVote(null);
-      setParticipants(prev =>
-        prev.map(p => ({ ...p, vote: null }))
-      );
-      setAiParticipant(prev => ({
-        ...prev,
-        vote: null,
-        explanation: null
-      }));
-      
-      broadcastChannel.postMessage({
-        type: 'RESET_VOTES'
-      });
+      try {
+        // Call backend to clean votes
+        const response = await fetch('http://localhost:8000/api/scrumpoker/cleanVotes', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ roomId })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to clean votes');
+        }
+
+        // Update local state
+        setAllVotesRevealed(false);
+        setUserVote(null);
+        setParticipants(prev =>
+          prev.map(p => ({ ...p, vote: null }))
+        );
+        setAiParticipant(prev => ({
+          ...prev,
+          vote: null,
+          explanation: null
+        }));
+        
+        // Broadcast to update other clients
+        broadcastChannel.postMessage({
+          type: 'RESET_VOTES'
+        });
+        fetchRoomData();
+      } catch (error) {
+        console.error('Error cleaning votes:', error);
+        alert('Failed to clean votes. Please try again.');
+      }
     }
   };
 
@@ -519,7 +540,7 @@ const Room = () => {
             <img src="/smarttalks.avif" alt="Smart Talks Logo" />
           </div>
           <div className="title-section">
-            <h1 style={{ color: 'var(--primary-light)' }}>Poquer de Planejamento</h1>
+            <h1 style={{ color: 'var(--primary-light)' }}>Pôquer de Planejamento</h1>
           </div>
           <div style={{
             display: 'flex',
@@ -831,6 +852,15 @@ const Room = () => {
                         <button 
                           onClick={resetVotes} 
                           className="button-secondary"
+                          style={{
+                            backgroundColor: 'var(--background)',  // This is the black background
+                            color: 'var(--text-light)',           // Light text color
+                            border: '1px solid var(--border-color)', // Optional border
+                            padding: '0.5rem 1rem',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
                         >
                           Nova Votação
                         </button>
