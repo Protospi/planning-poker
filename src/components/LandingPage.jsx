@@ -35,7 +35,7 @@ const LandingPage = () => {
 
         const data = await response.json();
         
-        navigate(`/room/${newRoomId}?isCreator=true&task=${encodeURIComponent(taskName)}&description=${encodeURIComponent(taskDescription)}`);
+        navigate(`/room/${newRoomId}`);
       } catch (error) {
         console.error('Error creating game:', error);
         setError('Failed to create game. Please try again.');

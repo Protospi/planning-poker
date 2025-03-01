@@ -8,10 +8,6 @@ const Room = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const isCreator = queryParams.get('isCreator') === 'true';
-  const taskName = queryParams.get('task');
-  const taskDescription = queryParams.get('description');
   
   const [userName, setUserName] = useState('');
   const [isNameSubmitted, setIsNameSubmitted] = useState(false);
@@ -28,6 +24,8 @@ const Room = () => {
     explanation: null
   });
   const [gameStarted, setGameStarted] = useState(false);
+  const [taskName, setTaskName] = useState('');
+  const [taskDescription, setTaskDescription] = useState('');
 
   const pointOptions = [1, 2, 3, 5, 8];
   const isScrumMaster = userName === scrumMasterName;
@@ -42,7 +40,8 @@ const Room = () => {
   // New function to fetch room data
   const fetchRoomData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/scrumpoker/getRoom', {
+      // First fetch room details
+      const roomResponse = await fetch('http://localhost:8000/api/scrumpoker/getRoom', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,14 +49,18 @@ const Room = () => {
         body: JSON.stringify({ roomId })
       });
 
-      if (!response.ok) {
+      if (!roomResponse.ok) {
         throw new Error('Failed to fetch room data');
       }
 
-      const roomData = await response.json();
+      const roomData = await roomResponse.json();
+      
+      // Update task details
+      setTaskName(roomData.taskName || '');
+      setTaskDescription(roomData.taskDescription || '');
       
       // Update participants state with fetched data
-      const updatedParticipants = roomData.map(vote => ({
+      const updatedParticipants = roomData.votes.map(vote => ({
         name: vote.participant,
         vote: vote.value,
         isScrumMaster: vote.tag === 'SCRUM_MASTER',
@@ -357,9 +360,24 @@ const Room = () => {
     e.preventDefault();
     if (userName.trim()) {
       const trimmedName = userName.trim();
-      const shouldBeScrumMaster = isCreator && !hasExistingScrumMaster;
 
       try {
+        // First check if there are any existing participants
+        const roomResponse = await fetch('http://localhost:8000/api/scrumpoker/getRoom', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ roomId })
+        });
+
+        if (!roomResponse.ok) {
+          throw new Error('Failed to get room data');
+        }
+
+        const roomData = await roomResponse.json();
+        const shouldBeScrumMaster = roomData.votes.length === 0; // First person becomes Scrum Master
+
         // Save participant to backend
         const response = await fetch('http://localhost:8000/api/scrumpoker/participant', {
           method: 'PUT',
@@ -381,30 +399,9 @@ const Room = () => {
         }
 
         // Get updated room data
-        const roomResponse = await fetch('http://localhost:8000/api/scrumpoker/getRoom', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ roomId })
-        });
-
-        if (!roomResponse.ok) {
-          throw new Error('Failed to get room data');
-        }
-
-        const roomData = await roomResponse.json();
-        
-        // Update local state with room data
-        const updatedParticipants = roomData.map(vote => ({
-          name: vote.participant,
-          vote: vote.value,
-          isScrumMaster: vote.tag === 'SCRUM_MASTER'
-        }));
-
-        setParticipants(updatedParticipants);
+        await fetchRoomData();
         setIsNameSubmitted(true);
-        
+
         if (shouldBeScrumMaster) {
           setScrumMasterName(trimmedName);
         }
@@ -440,7 +437,7 @@ const Room = () => {
       const roomData = await response.json();
       
       // Update local state with final data - make sure to include explanation
-      const updatedParticipants = roomData.map(vote => ({
+      const updatedParticipants = roomData.votes.map(vote => ({
         name: vote.participant,
         vote: vote.value,
         isScrumMaster: vote.tag === 'SCRUM_MASTER',
@@ -524,8 +521,32 @@ const Room = () => {
           <div className="title-section">
             <h1 style={{ color: 'var(--primary-light)' }}>Poquer de Planejamento</h1>
           </div>
-          <div className="user-section">
-            {/* Empty div to maintain layout */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2rem'
+          }}>
+            <button 
+              onClick={() => navigate('/')} 
+              className="button-secondary"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.8rem 1.2rem',
+                fontSize: '0.9rem',
+                letterSpacing: '0.5px'
+              }}
+            >
+              <span>Novo jogo</span>
+              <FaPlus />
+            </button>
+            <div className="user-section">
+              <span>{userName || ''}</span>
+              <div className="user-icon">
+                <FaUser />
+              </div>
+            </div>
           </div>
         </header>
         
@@ -541,7 +562,7 @@ const Room = () => {
               marginBottom: '2rem',
               fontSize: '1.8rem' 
             }}>
-              {!hasExistingScrumMaster && isCreator ? 'Digite seu nome para entrar como Scrum Master' : 'Digite seu nome para entrar como membro do time'}
+              {!hasExistingScrumMaster ? 'Digite seu nome para entrar como Scrum Master' : 'Digite seu nome para entrar como membro do time'}
             </h2>
             <form onSubmit={handleNameSubmit} style={{ 
               maxWidth: '320px', 
@@ -556,7 +577,7 @@ const Room = () => {
                 type="text"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
-                placeholder={!hasExistingScrumMaster && isCreator ? "Digite seu nome" : "Digite seu nome"}
+                placeholder={!hasExistingScrumMaster ? "Digite seu nome" : "Digite seu nome"}
                 required
                 style={{
                   textAlign: 'center',
@@ -575,7 +596,7 @@ const Room = () => {
                   fontSize: '1.1rem'
                 }}
               >
-                {!hasExistingScrumMaster && isCreator ? 'Entrar no Jogo' : 'Entrar no Jogo'}
+                {!hasExistingScrumMaster ? 'Entrar no Jogo' : 'Entrar no Jogo'}
               </button>
             </form>
           </div>
