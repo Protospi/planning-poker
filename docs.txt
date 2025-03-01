@@ -1,0 +1,9 @@
+import { Redis } from '@upstash/redis'
+
+const redis = new Redis({
+  url: 'https://noble-perch-18914.upstash.io',
+  token: 'AUniAAIjcDE5YTg0NjFhYzY5ODk0ZTdhOGZlMTA4MDc4MzFiZDgxY3AxMA',
+})
+
+await redis.set('foo', 'bar');
+const data = await redis.get('foo');

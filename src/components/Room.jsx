@@ -3,7 +3,6 @@ import VotingCard from './VotingCard';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import '../styles/global.css';
 import { FaUser, FaPlus } from 'react-icons/fa';
-import { getAIVote } from '../utils/aiVoting';
 
 const Room = () => {
   const { roomId } = useParams();
@@ -28,6 +27,7 @@ const Room = () => {
     isScrumMaster: false,
     explanation: null
   });
+  const [gameStarted, setGameStarted] = useState(false);
 
   const pointOptions = [1, 2, 3, 5, 8];
   const isScrumMaster = userName === scrumMasterName;
@@ -38,6 +38,56 @@ const Room = () => {
     teamMember: '#69db7c',   // light green
     ai: 'var(--primary-light)'  // keeping purple for AI
   };
+
+  // New function to fetch room data
+  const fetchRoomData = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/scrumpoker/getRoom', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ roomId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch room data');
+      }
+
+      const roomData = await response.json();
+      
+      // Update participants state with fetched data
+      const updatedParticipants = roomData.map(vote => ({
+        name: vote.participant,
+        vote: vote.value,
+        isScrumMaster: vote.tag === 'SCRUM_MASTER',
+        explanation: vote.explanation
+      }));
+
+      setParticipants(updatedParticipants);
+
+      // Update other states based on fetched data
+      const userParticipant = updatedParticipants.find(p => p.name === userName);
+      if (userParticipant) {
+        setUserVote(userParticipant.vote);
+      }
+
+      const scrumMaster = updatedParticipants.find(p => p.isScrumMaster);
+      if (scrumMaster) {
+        setScrumMasterName(scrumMaster.name);
+        setHasExistingScrumMaster(true);
+      }
+    } catch (error) {
+      console.error('Error fetching room data:', error);
+    }
+  };
+
+  // Add useEffect to fetch data when component mounts and after votes
+  useEffect(() => {
+    if (isNameSubmitted) {
+      fetchRoomData();
+    }
+  }, [isNameSubmitted]);
 
   // Remove the random room ID generation since rooms are now created from landing page
   useEffect(() => {
@@ -157,6 +207,38 @@ const Room = () => {
             );
             break;
 
+          case 'AI_JOINED_AND_VOTED':
+            setParticipants(prev => {
+              if (!prev.some(p => p.name === 'Izi')) {
+                return [...prev, data.aiParticipant];
+              }
+              return prev;
+            });
+            break;
+
+          case 'GAME_STARTED':
+            setGameStarted(true);
+            break;
+
+          case 'PARTICIPANT_JOINED':
+            if (isNameSubmitted) {
+              fetchRoomData();
+            }
+            break;
+
+          case 'VOTE_UPDATED':
+            if (isNameSubmitted) {
+              fetchRoomData();
+            }
+            break;
+
+          case 'VOTES_REVEALED':
+            if (isNameSubmitted) {
+              fetchRoomData();
+              setAllVotesRevealed(true);
+            }
+            break;
+
           default:
             break;
         }
@@ -175,109 +257,207 @@ const Room = () => {
     }
   }, [roomId, isNameSubmitted, userName]);
 
-  // Add this effect to handle AI voting after all human participants vote
+  // Modify handleVote to fetch updated data after voting
+  const handleVote = async (points) => {
+    if (!allVotesRevealed && gameStarted) {
+      try {
+        const response = await fetch('http://localhost:8000/api/scrumpoker/vote', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            roomId,
+            participant: userName,
+            vote: points
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to save vote');
+        }
+
+        // Get updated room data
+        await fetchRoomData();
+
+        // Broadcast to update other clients
+        broadcastChannel.postMessage({
+          type: 'VOTE_UPDATED',
+          data: { roomId }
+        });
+      } catch (error) {
+        console.error('Error saving vote:', error);
+        alert('Failed to save vote. Please try again.');
+      }
+    }
+  };
+
+  // Modify AI voting effect
   useEffect(() => {
     const handleAIVoting = async () => {
-      if (!allVotesRevealed && 
-          participants.length > 1 && // More than just AI
-          participants.every(p => p.name === 'Izi' || p.vote !== null)) {
-        
-        const aiVote = await getAIVote(
-          decodeURIComponent(taskName), 
-          decodeURIComponent(taskDescription)
-        );
+      // Only the Scrum Master should trigger AI voting
+      if (gameStarted &&
+          !allVotesRevealed && 
+          isScrumMaster &&  // Add this condition
+          participants.length > 0 &&
+          !participants.some(p => p.name === 'Izi') &&
+          participants.every(p => p.name !== 'Izi' && p.vote !== null)) {
 
-        setAiParticipant(prev => ({
-          ...prev,
-          vote: aiVote.points,
-          explanation: aiVote.explanation
-        }));
-
-        if (broadcastChannel) {
-          broadcastChannel.postMessage({
-            type: 'VOTE',
-            data: { userName: 'Izi', vote: aiVote.points }
+        try {
+          const aiVoteResponse = await fetch('http://localhost:8000/api/scrumpoker/aiVote', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              roomId
+            })
           });
+
+          if (!aiVoteResponse.ok) {
+            throw new Error('Failed to save AI vote');
+          }
+
+          const aiVoteData = await aiVoteResponse.json();
+          
+          const aiWithVote = {
+            name: 'Izi',
+            vote: aiVoteData.vote,
+            isScrumMaster: false,
+            explanation: aiVoteData.explanation,
+            id: 'ai-participant'  // Add unique ID for AI
+          };
+
+          // Broadcast first
+          if (broadcastChannel) {
+            broadcastChannel.postMessage({
+              type: 'AI_JOINED_AND_VOTED',
+              data: { aiParticipant: aiWithVote }
+            });
+          }
+
+          // Then update local state
+          setParticipants(prev => {
+            if (!prev.some(p => p.name === 'Izi')) {
+              return [...prev, aiWithVote];
+            }
+            return prev;
+          });
+
+        } catch (error) {
+          console.error('Error in AI voting process:', error);
         }
       }
     };
 
     handleAIVoting();
-  }, [participants, allVotesRevealed, taskName, taskDescription]);
+  }, [participants, gameStarted, allVotesRevealed, isScrumMaster, broadcastChannel, roomId]);
 
-  const handleNameSubmit = (e) => {
+  const handleNameSubmit = async (e) => {
     e.preventDefault();
-    if (userName.trim() && broadcastChannel) {
+    if (userName.trim()) {
       const trimmedName = userName.trim();
-      
-      // Check if the name is already taken
-      if (participants.some(p => p.name === trimmedName)) {
-        alert('This name is already taken. Please choose another name.');
-        return;
-      }
-
-      setIsNameSubmitted(true);
-      
-      // Only set as Scrum Master if creator AND no existing Scrum Master
       const shouldBeScrumMaster = isCreator && !hasExistingScrumMaster;
-      
-      if (shouldBeScrumMaster) {
-        setScrumMasterName(trimmedName);
-        // Add AI participant when Scrum Master joins
-        setParticipants(prev => [...prev, aiParticipant]);
-        broadcastChannel.postMessage({
-          type: 'JOIN_ROOM',
-          data: { 
-            userName: 'Izi',
-            isScrumMaster: false
-          }
+
+      try {
+        // Save participant to backend
+        const response = await fetch('http://localhost:8000/api/scrumpoker/participant', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            roomId,
+            participant: {
+              name: trimmedName,
+              role: shouldBeScrumMaster ? 'SCRUM_MASTER' : 'TEAM_MEMBER',
+              vote: null
+            }
+          })
         });
+
+        if (!response.ok) {
+          throw new Error('Failed to save participant');
+        }
+
+        // Get updated room data
+        const roomResponse = await fetch('http://localhost:8000/api/scrumpoker/getRoom', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ roomId })
+        });
+
+        if (!roomResponse.ok) {
+          throw new Error('Failed to get room data');
+        }
+
+        const roomData = await roomResponse.json();
+        
+        // Update local state with room data
+        const updatedParticipants = roomData.map(vote => ({
+          name: vote.participant,
+          vote: vote.value,
+          isScrumMaster: vote.tag === 'SCRUM_MASTER'
+        }));
+
+        setParticipants(updatedParticipants);
+        setIsNameSubmitted(true);
+        
+        if (shouldBeScrumMaster) {
+          setScrumMasterName(trimmedName);
+        }
+
+        // Broadcast join to update other clients
+        broadcastChannel.postMessage({
+          type: 'PARTICIPANT_JOINED',
+          data: { roomId }
+        });
+
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to join room. Please try again.');
+      }
+    }
+  };
+
+  const revealVotes = async () => {
+    try {
+      // Get final room data including AI vote
+      const response = await fetch('http://localhost:8000/api/scrumpoker/getRoom', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ roomId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get final votes');
       }
 
-      const newParticipant = { 
-        name: trimmedName, 
-        vote: null,
-        isScrumMaster: shouldBeScrumMaster
-      };
+      const roomData = await response.json();
+      
+      // Update local state with final data - make sure to include explanation
+      const updatedParticipants = roomData.map(vote => ({
+        name: vote.participant,
+        vote: vote.value,
+        isScrumMaster: vote.tag === 'SCRUM_MASTER',
+        explanation: vote.explanation
+      }));
 
-      // Add ourselves to participants
-      setParticipants(prev => [...prev, newParticipant]);
-
-      // Broadcast our join
-      broadcastChannel.postMessage({
-        type: 'JOIN_ROOM',
-        data: { 
-          userName: trimmedName,
-          isScrumMaster: shouldBeScrumMaster
-        }
-      });
-
-      // Request current state from others
-      broadcastChannel.postMessage({
-        type: 'REQUEST_STATE'
-      });
-    }
-  };
-
-  const handleVote = (points) => {
-    if (broadcastChannel && !allVotesRevealed) {
-      setUserVote(points);
-      setParticipants(prev =>
-        prev.map(p => p.name === userName ? { ...p, vote: points } : p)
-      );
-      broadcastChannel.postMessage({
-        type: 'VOTE',
-        data: { userName, vote: points }
-      });
-    }
-  };
-
-  const revealVotes = () => {
-    if (broadcastChannel) {
+      setParticipants(updatedParticipants);
       setAllVotesRevealed(true);
+
+      // Broadcast to update other clients
       broadcastChannel.postMessage({
-        type: 'REVEAL_VOTES'
+        type: 'VOTES_REVEALED',
+        data: { roomId }
       });
+    } catch (error) {
+      console.error('Error revealing votes:', error);
+      alert('Failed to reveal votes. Please try again.');
     }
   };
 
@@ -325,6 +505,13 @@ const Room = () => {
         type: 'RESET_VOTES'
       });
     }
+  };
+
+  const startGame = () => {
+    setGameStarted(true);
+    broadcastChannel.postMessage({
+      type: 'GAME_STARTED'
+    });
   };
 
   if (!isNameSubmitted) {
@@ -496,7 +683,7 @@ const Room = () => {
                 margin: 0 
               }}>
                 {participants.map(participant => (
-                  <li key={participant.name} style={{
+                  <li key={participant.id || participant.name + '-' + Math.random()} style={{
                     background: 'var(--background)',
                     padding: '1rem',
                     borderRadius: '8px',
@@ -536,18 +723,33 @@ const Room = () => {
 
             <div className="voting-section">
               <h3 style={{ color: 'var(--primary)' }}>Estimativa de Esforço</h3>
+              {isScrumMaster && !gameStarted && (
+                <div style={{ marginBottom: '2rem' }}>
+                  <button 
+                    onClick={startGame} 
+                    className="button-primary"
+                    style={{
+                      width: '100%',
+                      padding: '1rem',
+                      fontSize: '1.2rem'
+                    }}
+                  >
+                    Iniciar Votação
+                  </button>
+                </div>
+              )}
               <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
                 gap: '1rem',
                 marginTop: '1rem',
-                opacity: allVotesRevealed ? '0.6' : '1'
+                opacity: !gameStarted || allVotesRevealed ? '0.6' : '1'
               }}>
                 {pointOptions.map(points => (
                   <button
                     key={points}
                     onClick={() => handleVote(points)}
-                    disabled={allVotesRevealed}
+                    disabled={!gameStarted || allVotesRevealed}
                     style={{
                       background: userVote === points ? 'var(--gradient-1)' : 'white',
                       color: userVote === points ? 'white' : 'var(--primary)',
@@ -556,15 +758,29 @@ const Room = () => {
                       padding: '1rem',
                       fontSize: '1.3rem',
                       fontWeight: 'bold',
-                      cursor: allVotesRevealed ? 'not-allowed' : 'pointer',
+                      cursor: !gameStarted || allVotesRevealed ? 'not-allowed' : 'pointer',
                       transition: 'all 0.2s',
-                      opacity: allVotesRevealed ? '0.7' : '1'
+                      opacity: !gameStarted || allVotesRevealed ? '0.7' : '1'
                     }}
                   >
                     {points}
                   </button>
                 ))}
               </div>
+
+              {gameStarted && !allVotesRevealed && (
+                <div style={{
+                  marginTop: '1rem',
+                  textAlign: 'center',
+                  color: 'var(--text-light)'
+                }}>
+                  {participants.some(p => p.vote === null) ? 
+                    'Aguardando votos dos participantes...' : 
+                    participants.some(p => p.name === 'Izi') ?
+                      'Todos votaram! Aguardando Scrum Master revelar os votos.' :
+                      'IA está analisando e votando...'}
+                </div>
+              )}
 
               {allVotesRevealed && (
                 <div style={{
@@ -600,16 +816,27 @@ const Room = () => {
                       )}
                     </div>
                     
-                    {aiParticipant.explanation && (
+                    {/* Show AI explanation */}
+                    {participants.some(p => p.name === 'Izi') && (
                       <div style={{
                         background: 'rgba(255,255,255,0.15)',
-                        padding: '1rem',
-                        borderRadius: '4px',
-                        marginTop: '1rem',
-                        fontSize: '1rem'
+                        padding: '1.5rem',
+                        borderRadius: '8px',
+                        marginTop: '1rem'
                       }}>
-                        <p style={{ margin: 0, fontSize: '1.1rem' }}>
-                          <strong>Justificativa da IA:</strong> {aiParticipant.explanation}
+                        <h4 style={{ 
+                          margin: '0 0 0.5rem 0',
+                          color: 'white',
+                          fontSize: '1.2rem'
+                        }}>
+                          Análise da IA
+                        </h4>
+                        <p style={{ 
+                          margin: 0,
+                          fontSize: '1.1rem',
+                          lineHeight: '1.5'
+                        }}>
+                          {participants.find(p => p.name === 'Izi')?.explanation || 'Aguardando análise...'}
                         </p>
                       </div>
                     )}
@@ -619,7 +846,8 @@ const Room = () => {
             </div>
           </div>
 
-          {isScrumMaster && !allVotesRevealed && participants.every(p => p.vote !== null) && participants.length > 0 && (
+          {isScrumMaster && gameStarted && !allVotesRevealed && 
+            participants.every(p => p.name !== 'Izi' && p.vote !== null) && (
             <button 
               onClick={revealVotes} 
               className="button-primary"

@@ -6,13 +6,42 @@ import { FaUser, FaPlus } from 'react-icons/fa';
 const LandingPage = () => {
   const [taskName, setTaskName] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleCreateRoom = (e) => {
+  const handleCreateRoom = async (e) => {
     e.preventDefault();
     if (taskName.trim()) {
+      setIsLoading(true);
+      setError(null);
       const newRoomId = Math.random().toString(36).substring(2, 8);
-      navigate(`/room/${newRoomId}?isCreator=true&task=${encodeURIComponent(taskName)}&description=${encodeURIComponent(taskDescription)}`);
+      try {
+        const response = await fetch('http://localhost:8000/api/scrumpoker/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            roomId: newRoomId,
+            taskName: taskName,
+            taskDescription: taskDescription
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create game');
+        }
+
+        const data = await response.json();
+        
+        navigate(`/room/${newRoomId}?isCreator=true&task=${encodeURIComponent(taskName)}&description=${encodeURIComponent(taskDescription)}`);
+      } catch (error) {
+        console.error('Error creating game:', error);
+        setError('Failed to create game. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -151,11 +180,22 @@ const LandingPage = () => {
                   letterSpacing: '1px'
                 }}
                 onClick={handleCreateRoom}
+                disabled={isLoading}
               >
-                CRIAR JOGO
+                {isLoading ? 'CRIANDO...' : 'CRIAR JOGO'}
               </button>
             </div>
           </div>
+
+          {error && (
+            <div style={{ 
+              color: 'red', 
+              marginTop: '1rem', 
+              textAlign: 'center' 
+            }}>
+              {error}
+            </div>
+          )}
         </div>
       </div>
     </div>
