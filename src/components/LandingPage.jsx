@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/global.css';
 import { FaUser, FaPlus } from 'react-icons/fa';
+import { getApiUrl } from '../config';
 
 const LandingPage = () => {
   const [taskName, setTaskName] = useState('');
@@ -17,7 +18,7 @@ const LandingPage = () => {
       setError(null);
       const newRoomId = Math.random().toString(36).substring(2, 8);
       try {
-        const response = await fetch('http://localhost:8000/api/scrumpoker/create', {
+        const response = await fetch(getApiUrl('create'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

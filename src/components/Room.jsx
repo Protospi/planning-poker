@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import VotingCard from './VotingCard';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import '../styles/global.css';
-import { FaUser, FaPlus } from 'react-icons/fa';
+import { FaUser, FaPlus, FaCheck } from 'react-icons/fa';
+import { getApiUrl } from '../config';
 
 const Room = () => {
   const { roomId } = useParams();
@@ -26,6 +27,8 @@ const Room = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [taskName, setTaskName] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
+  const [editedDescription, setEditedDescription] = useState('');
+  const [isDescriptionEdited, setIsDescriptionEdited] = useState(false);
 
   const pointOptions = [1, 2, 3, 5, 8];
   const isScrumMaster = userName === scrumMasterName;
@@ -41,7 +44,7 @@ const Room = () => {
   const fetchRoomData = async () => {
     try {
       // First fetch room details
-      const roomResponse = await fetch('http://localhost:8000/api/scrumpoker/getRoom', {
+      const roomResponse = await fetch(getApiUrl('getRoom'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -242,6 +245,12 @@ const Room = () => {
             }
             break;
 
+          case 'DESCRIPTION_UPDATED':
+            if (isNameSubmitted) {
+              fetchRoomData();
+            }
+            break;
+
           default:
             break;
         }
@@ -264,7 +273,7 @@ const Room = () => {
   const handleVote = async (points) => {
     if (!allVotesRevealed && gameStarted) {
       try {
-        const response = await fetch('http://localhost:8000/api/scrumpoker/vote', {
+        const response = await fetch(getApiUrl('vote'), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -307,7 +316,7 @@ const Room = () => {
           participants.every(p => p.name !== 'Izi' && p.vote !== null)) {
 
         try {
-          const aiVoteResponse = await fetch('http://localhost:8000/api/scrumpoker/aiVote', {
+          const aiVoteResponse = await fetch(getApiUrl('aiVote'), {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -363,7 +372,7 @@ const Room = () => {
 
       try {
         // First check if there are any existing participants
-        const roomResponse = await fetch('http://localhost:8000/api/scrumpoker/getRoom', {
+        const roomResponse = await fetch(getApiUrl('getRoom'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -379,7 +388,7 @@ const Room = () => {
         const shouldBeScrumMaster = roomData.votes.length === 0; // First person becomes Scrum Master
 
         // Save participant to backend
-        const response = await fetch('http://localhost:8000/api/scrumpoker/participant', {
+        const response = await fetch(getApiUrl('participant'), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -422,7 +431,7 @@ const Room = () => {
   const revealVotes = async () => {
     try {
       // Get final room data including AI vote
-      const response = await fetch('http://localhost:8000/api/scrumpoker/getRoom', {
+      const response = await fetch(getApiUrl('getRoom'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -489,7 +498,7 @@ const Room = () => {
     if (broadcastChannel) {
       try {
         // Call backend to clean votes
-        const response = await fetch('http://localhost:8000/api/scrumpoker/cleanVotes', {
+        const response = await fetch(getApiUrl('cleanVotes'), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -530,6 +539,45 @@ const Room = () => {
     broadcastChannel.postMessage({
       type: 'GAME_STARTED'
     });
+  };
+
+  // Add this effect to initialize the edited description when room data is loaded
+  useEffect(() => {
+    if (taskDescription) {
+      setEditedDescription(decodeURIComponent(taskDescription));
+    }
+  }, [taskDescription]);
+
+  // Modify the handleDescriptionUpdate function
+  const handleDescriptionUpdate = async () => {
+    try {
+      const response = await fetch(getApiUrl('updateTaskDescription'), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          roomId: roomId,
+          taskDescription: editedDescription
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update description');
+      }
+
+      // Broadcast to update other clients
+      broadcastChannel.postMessage({
+        type: 'DESCRIPTION_UPDATED',
+        data: { roomId }
+      });
+
+      // Refresh room data after successful update
+      fetchRoomData();
+      setIsDescriptionEdited(false);
+    } catch (error) {
+      console.error('Error updating description:', error);
+    }
   };
 
   if (!isNameSubmitted) {
@@ -685,29 +733,53 @@ const Room = () => {
               </button>
             </div>
             
-            {taskDescription && (
+            <div style={{
+              background: 'var(--background)',
+              padding: '1rem',
+              borderRadius: '8px',
+              border: '1px solid var(--border-color)'
+            }}>
               <div style={{
-                background: 'var(--background)',
-                padding: '1rem',
-                borderRadius: '8px',
-                border: '1px solid var(--border-color)'
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '1rem',
+                width: '100%'
               }}>
-                <h3 style={{ 
-                  color: 'var(--text-light)',
-                  margin: '0 0 0.5rem 0',
-                  fontSize: '1rem'
-                }}>
-                </h3>
-                <p style={{ 
-                  margin: 0,
-                  color: 'var(--text-light)',
-                  whiteSpace: 'pre-wrap',
-                  fontSize: '1.2rem'
-                }}>
-                  {decodeURIComponent(taskDescription)}
-                </p>
+                <textarea
+                  value={editedDescription}
+                  onChange={(e) => {
+                    setEditedDescription(e.target.value);
+                    setIsDescriptionEdited(e.target.value !== decodeURIComponent(taskDescription));
+                  }}
+                  style={{ 
+                    flex: 1,
+                    padding: '0.8rem',
+                    fontSize: '1.2rem',
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    border: 'none',
+                    borderRadius: '4px',
+                    color: 'var(--text-light)',
+                    minHeight: '100px',
+                    resize: 'vertical'
+                  }}
+                />
+                {isDescriptionEdited && (
+                  <button
+                    onClick={handleDescriptionUpdate}
+                    className="button-primary"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem 1rem'
+                    }}
+                  >
+                    <FaCheck />
+                    <span>Salvar</span>
+                  </button>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           <div style={{ 
@@ -816,9 +888,7 @@ const Room = () => {
                 }}>
                   {participants.some(p => p.vote === null) ? 
                     'Aguardando votos dos participantes...' : 
-                    participants.some(p => p.name === 'Izi') ?
-                      'Todos votaram! Aguardando Scrum Master revelar os votos.' :
-                      'IA está analisando e votando...'}
+                    'Todos os participantes votaram com sucesso'}
                 </div>
               )}
 
@@ -896,7 +966,7 @@ const Room = () => {
           </div>
 
           {isScrumMaster && gameStarted && !allVotesRevealed && 
-            participants.every(p => p.name !== 'Izi' && p.vote !== null) && (
+            participants.every(p => p.vote !== null) && (
             <button 
               onClick={revealVotes} 
               className="button-primary"
