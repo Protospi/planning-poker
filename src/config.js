@@ -4,7 +4,7 @@ const environment = 'PROD';
 // Base URLs for different environments
 const BASE_URLS = {
   DEV: 'http://localhost:8000',
-  PROD: 'http://54.175.159.119:8000'
+  PROD: 'https://54.175.159.119:8000'
 };
 
 // API endpoints configuration
