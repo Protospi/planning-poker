@@ -1,5 +1,5 @@
 // Get environment from .env file
-const environment = process.env.REACT_APP_ENVIRONMENT || 'DEV';
+const environment = 'PROD';
 
 // Base URLs for different environments
 const BASE_URLS = {
