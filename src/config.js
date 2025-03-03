@@ -1,10 +1,10 @@
 // Get environment from .env file
-const environment = 'DEV';
+const environment = 'PROD';
 
 // Base URLs for different environments
 const BASE_URLS = {
   DEV: 'http://localhost:8000',
-  PROD: 'https://api.loes.pro:8000'
+  PROD: 'https://api.loes.pro:443'
 };
 
 // API endpoints configuration
